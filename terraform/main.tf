@@ -1,7 +1,3 @@
-provider "azurerm" {
-  features {}
-}
-
 # Resource Group for the East US Event Hub
 resource "azurerm_resource_group" "eastus" {
   name     = "eventhub-eastus-rg"
