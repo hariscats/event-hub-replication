@@ -2,15 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework> <!-- You can target another version if you wish -->
+    <TargetFramework>net7.0</TargetFramework> <!-- You can target another version if you wish -->
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Azure Event Hubs SDK -->
-    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.x.x" />
+    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.9.2" />
     
     <!-- Azure Event Hubs SDK producer for sending messages -->
-    <PackageReference Include="Azure.Messaging.EventHubs.Producer" Version="5.x.x" />
+    <PackageReference Include="Azure.Messaging.EventHubs.Producer" Version="5.9.2" />
   </ItemGroup>
 
 </Project>
