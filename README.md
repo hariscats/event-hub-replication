@@ -1,2 +1,2 @@
 # event-hub-replication
-Replicating events for DR using Stream Analytics
+Replicating events across Event Hubs in different regions for DR using Stream Analytics
