@@ -46,43 +46,37 @@ resource "azurerm_eventhub" "westus" {
   message_retention   = var.message_retention
 }
 
-# Create an Azure Stream Analytics job to copy events from the East US Event Hub to the West US Event Hub
-resource "azurerm_stream_analytics_job" "copy_eastus_to_westus" {
-  name                = "copy-eastus-to-westus"
-  location            = azurerm_resource_group.eastus.location
+# Stream Analytics Job input from East US Event Hub
+resource "azurerm_stream_analytics_stream_input_eventhub" "eastus" {
+  name                = "eastus-input"
+  stream_analytics_job_name = azurerm_stream_analytics_job.stream_analytics_job.name
   resource_group_name = azurerm_resource_group.eastus.name
-  sku                 = "Standard"
-  eventsink {
-    id   = azurerm_eventhub.westus.id
-    type = "EventHub"
-  }
-  inputs {
-    name                 = "eastus-input"
-    datasource {
-      type                 = "EventHub"
-      eventhub_name        = azurerm_eventhub.eastus.name
-      service_bus_namespace = azurerm_eventhub_namespace.eastus.name
-      shared_access_policy_name = "RootManageSharedAccessKey"
-      shared_access_policy_key  = azurerm_eventhub_namespace.eastus.default_primary_connection_string
-      consumer_group            = "$Default"
-    }
-    serialization {
-      type = "JSON"
-    }
-  }
-  outputs {
-    name = "westus-output"
-  }
+  servicebus_namespace = azurerm_eventhub_namespace.eastus.name
+  eventhub_name       = azurerm_eventhub.eastus.name
+  consumer_group      = "$Default"
 }
 
-# Create a query for the job 
-resource "azurerm_stream_analytics_job_query" "copy_eastus_to_westus" {
-  job_name         = azurerm_stream_analytics_job.copy_eastus_to_westus.name
-  query            = "SELECT * INTO westus-output FROM eastus-input"
-  output_name      = "westus-output"
-  output_datasource_type = "EventHub"
-  output_eventhub_name = azurerm_eventhub.westus.name
-  output_service_bus_namespace = azurerm_eventhub_namespace.westus.name
-  output_shared_access_policy_name = "RootManageSharedAccessKey"
-  output_shared_access_policy_key  = azurerm_eventhub_namespace.westus.default_primary_connection_string
+# Stream Analytics Job output to West US Event Hub
+resource "azurerm_stream_analytics_output_eventhub" "westus" { 
+  name                = "westus-output"
+  stream_analytics_job_name = azurerm_stream_analytics_job.stream_analytics_job.name
+  resource_group_name = azurerm_resource_group.westus.name
+  servicebus_namespace = azurerm_eventhub_namespace.westus.name
+  eventhub_name       = azurerm_eventhub.westus.name
+  partition_key       = "PartitionId"
+}
+
+# Stream Analytics Job to process data from East US Event Hub and output to West US Event Hub
+resource "azurerm_stream_analytics_job" "stream_analytics_job" {
+  name                = "stream-analytics-job"
+  location            = azurerm_resource_group.eastus.location
+  resource_group_name = azurerm_resource_group.eastus.name
+  transformation_query =  <<QUERY
+    SELECT
+        *
+    INTO
+        westus
+    FROM
+        eastus TIMESTAMP BY EventEnqueuedUtcTime 
+  QUERY
 }
